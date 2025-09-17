@@ -299,7 +299,6 @@ const UserManagement: React.FC = () => {
                               {employee.department && (
                                 <div className="text-xs text-gray-500">{employee.department.name}</div>
                               )}
-                              </div>
                             </div>
                           ))
                         )}
