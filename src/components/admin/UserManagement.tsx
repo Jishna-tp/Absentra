@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useData } from '../../contexts/DataContext';
 import { UserRole } from '../../types';
-import { Settings, Plus, Edit, Lock, Shield, Search, User, AlertCircle } from 'lucide-react';
+import { Settings, Plus, Edit, Lock, Shield, Search, User, AlertCircle, ChevronDown } from 'lucide-react';
 
 const UserManagement: React.FC = () => {
   const { employees } = useData();
@@ -10,6 +10,7 @@ const UserManagement: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [showEmployeeDropdown, setShowEmployeeDropdown] = useState(false);
   const [selectedEmployee, setSelectedEmployee] = useState<any>(null);
+  const [employeeSearchTerm, setEmployeeSearchTerm] = useState('');
   const [errors, setErrors] = useState<string[]>([]);
   const [formData, setFormData] = useState({
     username: '',
@@ -32,7 +33,8 @@ const UserManagement: React.FC = () => {
   const availableEmployees = employees.filter(emp => 
     emp.status === 'active' && 
     !users.some(user => user.employee_id === emp.employee_id) &&
-    emp.name.toLowerCase().includes(searchTerm.toLowerCase())
+    (emp.name.toLowerCase().includes(employeeSearchTerm.toLowerCase()) ||
+     emp.employee_id.toLowerCase().includes(employeeSearchTerm.toLowerCase()))
   );
 
   const validateForm = () => {
@@ -112,7 +114,7 @@ const UserManagement: React.FC = () => {
       is_active: true
     });
     setSelectedEmployee(null);
-    setSearchTerm('');
+    setEmployeeSearchTerm('');
     setErrors([]);
     setShowAddForm(false);
     setEditingUser(null);
@@ -138,7 +140,7 @@ const UserManagement: React.FC = () => {
     setSelectedEmployee(employee);
     setFormData({ ...formData, employee_id: employee.employee_id });
     setShowEmployeeDropdown(false);
-    setSearchTerm('');
+    setEmployeeSearchTerm('');
   };
 
   const handleResetPassword = (userId: string, username: string) => {
@@ -245,20 +247,23 @@ const UserManagement: React.FC = () => {
               ) : (
                 <div className="relative">
                   <div
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg cursor-pointer focus:ring-2 focus:ring-purple-500 focus:border-purple-500 bg-white"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg cursor-pointer focus:ring-2 focus:ring-purple-500 focus:border-purple-500 bg-white flex items-center justify-between"
                     onClick={() => setShowEmployeeDropdown(!showEmployeeDropdown)}
                   >
-                    {selectedEmployee ? (
-                      <div className="flex items-center gap-2">
-                        <User className="w-4 h-4 text-gray-500" />
-                        <span>{selectedEmployee.name} ({selectedEmployee.employee_id})</span>
-                      </div>
-                    ) : (
-                      <div className="flex items-center gap-2 text-gray-500">
-                        <Search className="w-4 h-4" />
-                        <span>Search and select employee...</span>
-                      </div>
-                    )}
+                    <div className="flex items-center gap-2 flex-1">
+                      {selectedEmployee ? (
+                        <>
+                          <User className="w-4 h-4 text-gray-500" />
+                          <span>{selectedEmployee.name} ({selectedEmployee.employee_id})</span>
+                        </>
+                      ) : (
+                        <>
+                          <User className="w-4 h-4 text-gray-400" />
+                          <span className="text-gray-500">Select an employee...</span>
+                        </>
+                      )}
+                    </div>
+                    <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform ${showEmployeeDropdown ? 'rotate-180' : ''}`} />
                   </div>
                   
                   {showEmployeeDropdown && (
@@ -269,8 +274,8 @@ const UserManagement: React.FC = () => {
                           <input
                             type="text"
                             placeholder="Search employees..."
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
+                            value={employeeSearchTerm}
+                            onChange={(e) => setEmployeeSearchTerm(e.target.value)}
                             className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
                             autoFocus
                           />
@@ -280,7 +285,7 @@ const UserManagement: React.FC = () => {
                       <div className="max-h-48 overflow-y-auto">
                         {availableEmployees.length === 0 ? (
                           <div className="p-3 text-center text-gray-500">
-                            {searchTerm ? 'No employees found matching your search' : 'No available employees'}
+                            {employeeSearchTerm ? 'No employees found matching your search' : 'No available employees'}
                           </div>
                         ) : (
                           availableEmployees.map((employee) => (
@@ -289,14 +294,11 @@ const UserManagement: React.FC = () => {
                               className="p-3 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-0"
                               onClick={() => handleEmployeeSelect(employee)}
                             >
-                              <div className="flex items-center gap-3">
-                                <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center">
-                                  <User className="w-4 h-4 text-purple-600" />
-                                </div>
-                                <div>
-                                  <div className="font-medium text-gray-900">{employee.name}</div>
-                                  <div className="text-sm text-gray-600">{employee.employee_id} • {employee.position}</div>
-                                </div>
+                              <div className="font-medium text-gray-900">{employee.name} ({employee.employee_id})</div>
+                              <div className="text-sm text-gray-600">{employee.position}</div>
+                              {employee.department && (
+                                <div className="text-xs text-gray-500">{employee.department.name}</div>
+                              )}
                               </div>
                             </div>
                           ))
